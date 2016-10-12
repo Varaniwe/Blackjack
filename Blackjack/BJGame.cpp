@@ -214,6 +214,7 @@ void BJGame::process_game()
         {
             bjlog.debug("Timeout");
             end_game();
+
             return;
         }
 
