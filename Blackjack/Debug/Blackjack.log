@@ -1,0 +1,7 @@
+﻿  BJSocket.cpp
+c:\users\ivara_000\documents\visual studio 2015\projects\blackjack\blackjack\bjsocket.cpp(151): warning C4018: <: несоответствие типов со знаком и без знака
+  BJServer.cpp
+c:\users\ivara_000\documents\visual studio 2015\projects\blackjack\blackjack\bjserver.cpp(78): warning C4018: <: несоответствие типов со знаком и без знака
+  BJClient.cpp
+  Создание кода...
+  Blackjack.vcxproj -> C:\Users\ivara_000\Documents\Visual Studio 2015\Projects\Blackjack\Debug\Blackjack.exe
