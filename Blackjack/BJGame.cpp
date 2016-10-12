@@ -203,6 +203,7 @@ void BJGame::process_game()
                 }
             }
         }
+
         
         // if somebody made bet deal cards to players in game
         if (can_continue)
