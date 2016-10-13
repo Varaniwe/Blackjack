@@ -175,6 +175,25 @@ void BJSocket::send_outgoing_routine()
         }
 
     }
+
+    /*
+    transmitting message length
+    while (true)
+    {
+        std::stringstream output;
+        BJMessage bjmessage = std::move(*outgoing.wait_and_pop().get());
+        UCHAR start_flag[5] = { 0xFF ,0xFF ,0xFF ,0xFF, '\0' };
+
+        int x = bjmessage.size();
+        UCHAR* msg_length = reinterpret_cast<UCHAR*>(&x);
+        
+        // TODO : check little endian and big endian
+        output << start_flag << msg_length[0] << msg_length[1] << msg_length[2] << msg_length[3] << bjmessage.get_message_string();
+        int res = send(bjmessage.socket(), output.str().c_str(), bjmessage.size() + sizeof(0xFFFF) + sizeof(bjmessage.size()), 0);
+        if (res == SOCKET_ERROR) {
+            bjlog.error("Couldn't send data to socket", bjmessage.socket(), "error:", WSAGetLastError());
+        }        
+    }*/
 }
 
 BJMessage BJSocket::Receive()
@@ -184,6 +203,27 @@ BJMessage BJSocket::Receive()
 
 void BJSocket::ReceiveMessage(int client_number)
 {
+
+    /*
+    transmitting message length
+    UCHAR length_buffer[4];
+    int counter = 0;
+    while (length_buffer[0] != UCHAR_MAX || length_buffer[1] != UCHAR_MAX || length_buffer[2] != UCHAR_MAX || length_buffer[3] != UCHAR_MAX)
+    {
+        // until we receive start sequence 0xFFFF
+        recv(sockets[client_number], (char*)length_buffer + (++counter % 4), 1, 0);
+    }
+    // receive 4 bytes, message length
+    recv(sockets[client_number], (char*)length_buffer, 4, 0);
+    int* c = reinterpret_cast<int*>(length_buffer);
+
+    int message_length = *c;
+    std::unique_ptr<char> data(new char[message_length]);
+    recv(sockets[client_number], data.get(), message_length, 0);
+    incoming.push(BJMessage(sockets[client_number], data.get(), message_length));
+    */
+
+
     // we will receive messages buffer_size length, useful payload ends with message_delimiter
     char data[buffer_size + 1];
     data[buffer_size] = message_delimiter;
