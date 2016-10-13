@@ -141,40 +141,40 @@ void BJSocket::BJWaitForEvents()
         }
 
     }
-	thr.join();
+    thr.join();
 }
 
 
 void BJSocket::send_outgoing_routine()
 {
-	char data[buffer_size];
-	while (true)
-	{
+    char data[buffer_size];
+    while (true)
+    {
 
-		BJMessage bjmessage = std::move(*outgoing.wait_and_pop().get());
-		int message_length_remain = bjmessage.size();
-		int iter = 0;
-		while (message_length_remain >= 0)
-		{
-			if (message_length_remain > buffer_size)
-			{
-				memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, buffer_size);
-			}
-			else
-			{
-				memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, message_length_remain);
-				memset(data + message_length_remain, message_delimiter, buffer_size - message_length_remain);
-			}
+        BJMessage bjmessage = std::move(*outgoing.wait_and_pop().get());
+        int message_length_remain = bjmessage.size();
+        int iter = 0;
+        while (message_length_remain >= 0)
+        {
+            if (message_length_remain > buffer_size)
+            {
+                memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, buffer_size);
+            }
+            else
+            {
+                memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, message_length_remain);
+                memset(data + message_length_remain, message_delimiter, buffer_size - message_length_remain);
+            }
 
-			message_length_remain -= buffer_size;
-			++iter;
-			int res = send(bjmessage.socket(), data, buffer_size, 0);
-			if (res == SOCKET_ERROR) {
-				bjlog.error("Couldn't send data to socket", bjmessage.socket(), "error:", WSAGetLastError());
-			}
-		}
+            message_length_remain -= buffer_size;
+            ++iter;
+            int res = send(bjmessage.socket(), data, buffer_size, 0);
+            if (res == SOCKET_ERROR) {
+                bjlog.error("Couldn't send data to socket", bjmessage.socket(), "error:", WSAGetLastError());
+            }
+        }
 
-	}
+    }
 }
 
 BJMessage BJSocket::Receive()
@@ -184,21 +184,21 @@ BJMessage BJSocket::Receive()
 
 void BJSocket::ReceiveMessage(int client_number)
 {
-	// we will receive messages buffer_size length, useful payload ends with message_delimiter
+    // we will receive messages buffer_size length, useful payload ends with message_delimiter
     char data[buffer_size + 1];
-	data[buffer_size] = message_delimiter;
+    data[buffer_size] = message_delimiter;
     char* end_pointer = NULL;
 
-	int message_length = recv(sockets[client_number], data, buffer_size, 0);
-	if (message_length > 0)
-	{
-		end_pointer = std::find(data, data + buffer_size, message_delimiter);
-		incoming_message << std::string(data, end_pointer - data);
-	}
+    int message_length = recv(sockets[client_number], data, buffer_size, 0);
+    if (message_length > 0)
+    {
+        end_pointer = std::find(data, data + buffer_size, message_delimiter);
+        incoming_message << std::string(data, end_pointer - data);
+    }
 
     if (end_pointer != data + buffer_size)
     {
         incoming.push(BJMessage(sockets[client_number], incoming_message.str()));
-		incoming_message.str(std::string());
+        incoming_message.str(std::string());
     }
 }
