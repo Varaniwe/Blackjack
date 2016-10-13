@@ -63,14 +63,12 @@ void BJServer::CloseConnection(int client_number)
 void BJServer::BJSendMessage(char * data, int data_size, SOCKET sckt)
 {
     BJMessage bjmessage(sckt, data, data_size);
-    outgoing.push(bjmessage);    
+    outgoing.push(bjmessage);
 }
 
 void BJServer::BJSendMessage(BJMessage bjmessage)
 {
-    //bjlog.write(bjmessage.get_message_string());
-
-    outgoing.push(bjmessage);    
+    outgoing.push(bjmessage);
 }
 
 void BJServer::BJSendMessage(std::string msg)

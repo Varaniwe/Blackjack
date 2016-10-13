@@ -1,4 +1,6 @@
 #pragma once
+#include <mutex>
+
 #include "BJSocket.h"
 class BJClient : public BJSocket
 {

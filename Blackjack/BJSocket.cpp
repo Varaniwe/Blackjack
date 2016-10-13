@@ -1,8 +1,9 @@
 #include "BJSocket.h"
 
+
 BJSocket::BJSocket() : bjlog(std::cout)
 {
-    SOCKET own_socket = INVALID_SOCKET;
+    own_socket = INVALID_SOCKET;
     bjlog.set_min_log_level(LogLevel::debug);
 }
 
@@ -91,44 +92,7 @@ void BJSocket::BJWaitForEvents()
         }
     }
 
-    std::thread thr(
-        [this]() 
-    {
-        char data[buffer_size];
-        while (true)
-        {                    
-            BJMessage bjmessage = std::move(*outgoing.wait_and_pop().get());
-            int message_length_remain = bjmessage.size();
-            int iter = 0;
-            while (message_length_remain > 0)
-            {
-                if (message_length_remain > buffer_size)
-                {
-                    memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, buffer_size);
-                }
-                else
-                {
-                    memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, message_length_remain);
-                }
-                
-                if (message_length_remain / buffer_size < 1)
-                {
-                    memset(data + message_length_remain, '\0', buffer_size - message_length_remain);
-                }
-                message_length_remain -= buffer_size;
-                ++iter;
-                //int res = send(bjmessage.socket(), bjmessage.get_message().get(), bjmessage.size(), 0);
-                //bjlog.debug("sending", data);
-                //std::this_thread::sleep_for(std::chrono::duration<int, std::ratio<1, 1000>>(10));
-                int res = send(bjmessage.socket(), data, buffer_size, 0);
-                if (res == SOCKET_ERROR) {
-                    bjlog.error("Couldn't send data to socket", bjmessage.socket(), "error:", WSAGetLastError());
-                }
-            }
-            
-        }        
-    });
-    
+    std::thread thr(&BJSocket::send_outgoing_routine, this);    
 
     while (sockets.size() > 0 && ahEvents.size() > 0)
     {
@@ -144,9 +108,7 @@ void BJSocket::BJWaitForEvents()
             break;
 
         default:
-        {
-            std::lock_guard<std::mutex> locker(sockets_mutex);
-
+        {            
             int i;
             for (i = 0; i < ahEvents.size(); ++i)
             {
@@ -179,9 +141,41 @@ void BJSocket::BJWaitForEvents()
         }
 
     }
+	thr.join();
 }
 
 
+void BJSocket::send_outgoing_routine()
+{
+	char data[buffer_size];
+	while (true)
+	{
+
+		BJMessage bjmessage = std::move(*outgoing.wait_and_pop().get());
+		int message_length_remain = bjmessage.size();
+		int iter = 0;
+		while (message_length_remain >= 0)
+		{
+			if (message_length_remain > buffer_size)
+			{
+				memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, buffer_size);
+			}
+			else
+			{
+				memcpy_s(data, buffer_size, bjmessage.get_message().get() + iter * buffer_size, message_length_remain);
+				memset(data + message_length_remain, message_delimiter, buffer_size - message_length_remain);
+			}
+
+			message_length_remain -= buffer_size;
+			++iter;
+			int res = send(bjmessage.socket(), data, buffer_size, 0);
+			if (res == SOCKET_ERROR) {
+				bjlog.error("Couldn't send data to socket", bjmessage.socket(), "error:", WSAGetLastError());
+			}
+		}
+
+	}
+}
 
 BJMessage BJSocket::Receive()
 {
@@ -190,22 +184,21 @@ BJMessage BJSocket::Receive()
 
 void BJSocket::ReceiveMessage(int client_number)
 {
-
+	// we will receive messages buffer_size length, useful payload ends with message_delimiter
     char data[buffer_size + 1];
-    std::stringstream message;
-    data[buffer_size] = '\0';
-    int message_length = 0;
+	data[buffer_size] = message_delimiter;
     char* end_pointer = NULL;
 
-    do
-    {
-        message_length += recv(sockets[client_number], data, buffer_size, 0);
-        end_pointer = std::find(data, data + buffer_size, '\0');
-        message << std::string(data);
-    } while (end_pointer == data + buffer_size);
+	int message_length = recv(sockets[client_number], data, buffer_size, 0);
+	if (message_length > 0)
+	{
+		end_pointer = std::find(data, data + buffer_size, message_delimiter);
+		incoming_message << std::string(data, end_pointer - data);
+	}
 
-    if (message_length > 0)
+    if (end_pointer != data + buffer_size)
     {
-        incoming.push(BJMessage(sockets[client_number], message.str()));
+        incoming.push(BJMessage(sockets[client_number], incoming_message.str()));
+		incoming_message.str(std::string());
     }
 }

@@ -77,9 +77,6 @@
     <ClCompile Include="BJClient.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="threadsafe_queue.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
     <ClCompile Include="BJMessage.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>

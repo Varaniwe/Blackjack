@@ -10,8 +10,8 @@ BJGame::BJGame(IBJGameInterconnection * interconn) : bjlog(std::cout)
     bjlog.set_min_log_level(LogLevel::debug);
     game_is_processing = false;
     wait_for_bets = false;
-    wait_for_bets_time = std::chrono::duration<int, std::ratio<1>>(10);
-    wait_for_card_time = std::chrono::duration<int, std::ratio<1>>(10);
+    wait_for_bets_time = std::chrono::duration<int, std::ratio<1>>(60);
+    wait_for_card_time = std::chrono::duration<int, std::ratio<1>>(30);
 }
 
 BJGame::BJGame(const BJGame & other) : bjlog(std::cout)
@@ -235,8 +235,6 @@ void BJGame::process_game()
             }
         }
 
-        std::string curr_status = get_current_status();
-        notify_all(curr_status);
         find_winner();
         end_game();
     }
@@ -289,7 +287,7 @@ void BJGame::deal_card(SOCKET sckt)
         card_sum = count_cards(sckt);
         bjlog.write(players[sckt].username, "takes", card.get_string());
     }
-    notify_all(get_current_status(sckt));
+    notify_all("send_status:" + get_current_status(sckt));
     if (card_sum < 21)
     {
         offer_card(sckt);
@@ -337,8 +335,7 @@ void BJGame::deal_cards_to_all()
         }
     }
 
-    std::string curr_status = get_current_status();
-    notify_all(curr_status);    
+    notify_all("send_status:" + get_current_status());
 }
 
 std::string BJGame::get_current_status()
@@ -509,7 +506,8 @@ void BJGame::notify_all(std::string message)
 
 void BJGame::send_status(SOCKET sckt)
 {    
-    BJMessage msg(sckt, get_current_status(sckt));
+	std::string cmd = "send_status:" + get_current_status(sckt);
+    BJMessage msg(sckt, cmd);
     interconnection->BJSendMessage(msg);
 }
 
@@ -611,8 +609,7 @@ int BJGame::count_dealer_cards()
         if (res >= 16 && res <= 21)
         {
             bjlog.write("Dealer's sum is", res); 
-            std::string curr_status = get_current_status();
-            notify_all(curr_status);
+            notify_all("send_status:" + get_current_status());
             return res;
         }
         // если перебор, считаем по минимуму

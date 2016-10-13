@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-        int default_port = 12346;
+        int default_port = 12345;
         std::cout << "Default server port " << default_port << std::endl;
-        if (!server.BJServerInit(12346))
+        if (!server.BJServerInit(default_port))
             return -1;
         some_socket = &(server);
         game = BJGame(some_socket);

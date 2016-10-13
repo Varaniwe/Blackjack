@@ -1,31 +1,35 @@
 #pragma once
-#include <winsock2.h>
 #include <iostream>
-#include "Ws2tcpip.h"
-#include <mutex>
 #include <vector>
+#include <winsock2.h>
+#include "Ws2tcpip.h"
 
-#include "BJLog.h"
-#include "threadsafe_queue.h"
-#include "BJMessage.h"
 #include "IBJGameInterconnection.h"
+#include "BJLog.h"
+#include "BJMessage.h"
+#include "threadsafe_queue.h"
 
 class BJSocket : public IBJGameInterconnection
 {
+private:
+	std::stringstream incoming_message;
+	void send_outgoing_routine();
+
 protected:
     SOCKET own_socket;
     sockaddr_in own_addr;
     std::vector<WSAEVENT> ahEvents;
-    std::vector<SOCKET> sockets; 
+    std::vector<SOCKET> sockets;
     bool is_server;
     threadsafe_queue<BJMessage> incoming;
     threadsafe_queue<BJMessage> outgoing;
 
+	// transferring message size
     static const int buffer_size = 128;
+	static const char message_delimiter = '#';
     
     BJLog bjlog;
 
-    std::mutex sockets_mutex;
     
 public:
     BJSocket();
